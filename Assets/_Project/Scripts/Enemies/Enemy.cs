@@ -1,69 +1,50 @@
+using _Project.Scripts.Core;
+using _Project.Scripts.Player;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour
+namespace _Project.Scripts.Enemies
 {
-    [Header("Legacy Stats")]
-    public int hp = 3;
-    public float contactDamageCooldown = 0.6f;
-
-    [Header("References (legacy)")]
-    public GameStuff game;
-    public MonoBehaviour uiStuff;
-
-    float _lastContactDamageTime = -999f;
-
-    void Awake()
+    public class Enemy : MonoBehaviour
     {
-        // Find refs lazily (coupled, slow)
-        if (game == null) game = FindObjectOfType<GameStuff>();
-        if (uiStuff == null) uiStuff = FindObjectOfType<UIStuff>();
-    }
+        [Header("Stats")]
+        [SerializeField] private int hp = 3;
+        [SerializeField] private float contactDamageCooldown = 0.6f;
+        [SerializeField] private int pointsPerKill = 10;
 
-    public void TakeDamage(int dmg)
-    {
-        hp -= dmg;
+        private float _lastContactDamageTime = -999f;
 
-        if (hp <= 0)
+        public void TakeDamage(int dmg)
         {
-            DieLegacy();
-        }
-    }
+            hp -= dmg;
 
-    void OnTriggerStay2D(Collider2D other)
-    {
-        if (other.CompareTag(GlobalVars.BulletTag))
-        {
-            TakeDamage(1);
-
-            Destroy(other.gameObject);
-            return;
+            if (hp <= 0)
+            {
+                Die();
+            }
         }
 
-        if (other.CompareTag(GlobalVars.PlayerTag))
+        private void OnTriggerStay2D(Collider2D other)
         {
-            if (Time.time - _lastContactDamageTime < contactDamageCooldown) return;
-            _lastContactDamageTime = Time.time;
+            if (other.TryGetComponent<Bullet>(out var bullet))
+            {
+                TakeDamage(1); 
+                bullet.NotifyHit();
+                return;
+            }
 
-            other.SendMessage("ApplyDamage", 1, SendMessageOptions.DontRequireReceiver);
-        }
-    }
+            if (other.TryGetComponent<PlayerController>(out var playerController))
+            {
+                if (Time.time - _lastContactDamageTime < contactDamageCooldown) return;
+                _lastContactDamageTime = Time.time;
 
-    void DieLegacy()
-    {
-        if (game != null)
-        {
-            game.NotifyEnemyDied();
-        }
-        else
-        {
-            GlobalVars.Score += GlobalVars.PointsPerKill;
+                playerController.ApplyDamage(1);
+            }
         }
 
-        if (uiStuff != null)
+        private void Die()
         {
-            uiStuff.SendMessage("PulseScore", SendMessageOptions.DontRequireReceiver);
+            EventBus.Instance.Publish_EnemyDied(pointsPerKill);
+            Destroy(gameObject);
         }
-
-        Destroy(gameObject);
     }
 }
