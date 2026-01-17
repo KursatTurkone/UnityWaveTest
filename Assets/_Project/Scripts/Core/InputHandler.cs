@@ -1,48 +1,47 @@
 using UnityEngine;
 
-public class InputHandler : MonoBehaviour
+namespace _Project.Scripts.Core
 {
-    [Header("Debug (Legacy)")]
-    public bool allowPause = true;
-    public KeyCode pauseKey = KeyCode.Escape;
-
-    [Header("References (Optional)")]
-    public GameStuff game;
-
-    void Awake()
+    public class InputHandler : MonoBehaviour
     {
-        if (game == null) game = FindObjectOfType<GameStuff>();
-    }
+        [Header("Input Settings")]
+        [SerializeField] private bool allowPause = true;
+        [SerializeField] private KeyCode pauseKey = KeyCode.Escape;
+        [SerializeField] private KeyCode restartKey = KeyCode.R;
 
-    void Update()
-    {
-        if (allowPause && Input.GetKeyDown(pauseKey))
+        private bool _isPaused;
+
+        private void Update()
         {
-            GlobalVars.GameIsPaused = !GlobalVars.GameIsPaused;
-            Time.timeScale          = GlobalVars.GameIsPaused ? 0f : 1f;
-
-            if (GlobalVars.VerboseLogs) Debug.Log("Pause toggled -> " + GlobalVars.GameIsPaused);
+            HandlePauseInput();
+            HandleRestartInput();
+            HandleDebugInput();
         }
 
-        if (Input.GetKeyDown(GlobalVars.RestartKey))
+        private void HandlePauseInput()
         {
-            if (game != null)
+            if (allowPause && Input.GetKeyDown(pauseKey))
             {
-                game.TryRestartFromInput();
-            }
-            else
-            {
-                // Do something questionable
-                GlobalVars.GameIsOver = false;
-                GlobalVars.Score      = 0;
-                GlobalVars.Wave       = 1;
+                _isPaused = !_isPaused;
+                EventBus.Instance.Publish_GamePaused(_isPaused);
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.F1))
+        private void HandleRestartInput()
         {
-            GlobalVars.VerboseLogs = !GlobalVars.VerboseLogs;
-            Debug.Log("VerboseLogs=" + GlobalVars.VerboseLogs);
+            if (Input.GetKeyDown(restartKey))
+            {
+                EventBus.Instance.Publish_GameRestart();
+            }
+        }
+
+        private void HandleDebugInput()
+        {
+            if (Input.GetKeyDown(KeyCode.F1))
+            {
+                GlobalVars.VerboseLogs = !GlobalVars.VerboseLogs;
+                Debug.Log($"VerboseLogs = {GlobalVars.VerboseLogs}");
+            }
         }
     }
 }

@@ -1,81 +1,51 @@
+using _Project.Scripts.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameOverPanel : MonoBehaviour
+namespace _Project.Scripts.UI
 {
-    [Header("UI")]
-    public GameObject root;
-    public Button restartButton;
-    public Text hintText;
-
-    [Header("Legacy")]
-    public bool autoWire = true;
-
-    GameStuff _game;
-
-    void Awake()
+    public class GameOverPanel : MonoBehaviour
     {
-        if (autoWire)
+        [Header("UI Elements")]
+        [SerializeField] private GameObject root;
+        [SerializeField] private Button restartButton;
+        [SerializeField] private Text hintText;
+
+        private void Awake()
         {
-            if (root == null) root = gameObject;
+            if (root == null)
+                root = gameObject;
 
-            if (restartButton == null)
+            if (restartButton != null)
             {
-                var t = transform.Find("RestartButton");
-                if (t != null) restartButton = t.GetComponent<Button>();
-            }
-
-            if (hintText == null)
-            {
-                var t = transform.Find("HintText");
-                if (t != null) hintText = t.GetComponent<Text>();
+                restartButton.onClick.AddListener(OnRestartClicked);
             }
         }
 
-        _game = FindObjectOfType<GameStuff>();
-
-        if (restartButton != null)
+        private void Start()
         {
-            restartButton.onClick.AddListener(RestartClicked);
-        }
-    }
-
-    void Update()
-    {
-        if (root != null && root.activeSelf && Input.GetKeyDown(GlobalVars.RestartKey))
-        {
-            RestartClicked();
+            if (hintText != null)
+            {
+                hintText.text = $"Press 'R' to restart";
+            }
         }
 
-        if (hintText != null)
+        public void Show()
         {
-            hintText.text = "Press '" + GlobalVars.RestartKey + "' to restart";
-        }
-    }
-
-    public void Show()
-    {
-        if (root != null) root.SetActive(true);
-    }
-
-    public void Hide()
-    {
-        if (root != null) root.SetActive(false);
-    }
-
-    void RestartClicked()
-    {
-        if (_game != null)
-        {
-            _game.TryRestartFromInput();
-        }
-        else
-        {
-            GlobalVars.GameIsOver = false;
-            GlobalVars.Score = 0;
-            GlobalVars.Wave = 1;
+            if (root != null)
+                root.SetActive(true);
         }
 
-        Hide();
+        public void Hide()
+        {
+            if (root != null)
+                root.SetActive(false);
+        }
+
+        private void OnRestartClicked()
+        {
+            EventBus.Instance.Publish_GameRestart();
+            Hide();
+        }
     }
 }
