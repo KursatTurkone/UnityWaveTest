@@ -73,3 +73,11 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+.idea/.idea.UnityWaveTest/.idea/vcs.xml
+.idea/.idea.UnityWaveTest/.idea/material_theme_project_new.xml
+.idea/.idea.UnityWaveTest/.idea/indexLayout.xml
+.idea/.idea.UnityWaveTest/.idea/encodings.xml
+.idea/.idea.UnityWaveTest/.idea/copilot.data.migration.edit.xml
+.idea/.idea.UnityWaveTest/.idea/copilot.data.migration.ask2agent.xml
+.idea/.idea.UnityWaveTest/.idea/copilot.data.migration.agent.xml
+REFACTORING_PLAN.md
