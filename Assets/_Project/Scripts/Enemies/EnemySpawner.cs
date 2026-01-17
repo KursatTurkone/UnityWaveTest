@@ -47,12 +47,11 @@ namespace _Project.Scripts.Enemies
         public void SpawnOneEnemy()
         {
             if (enemyPrefab == null) return;
-            if (_playerTransform == null) return;
 
             Vector3 spawnPosition = GetSpawnPosition();
             var enemyObject = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
 
-            if (enemyObject.TryGetComponent<EnemyMover>(out var enemyMover))
+            if (_playerTransform != null && enemyObject.TryGetComponent<EnemyMover>(out var enemyMover))
             {
                 enemyMover.SetPlayerTransform(_playerTransform);
             }
