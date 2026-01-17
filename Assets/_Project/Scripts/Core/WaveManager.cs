@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using _Project.Scripts.Enemies;
 using UnityEngine;
 
 namespace _Project.Scripts.Core

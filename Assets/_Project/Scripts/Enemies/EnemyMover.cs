@@ -1,60 +1,63 @@
+using _Project.Scripts.Core;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D))]
-public class EnemyMover : MonoBehaviour
+namespace _Project.Scripts.Enemies
 {
-    public float speed  = 2.25f;
-    public float jitter = 0.15f;
-
-    Rigidbody2D _rb;
-    Transform   ply;
-    float       _timer;
-
-    void Awake()
+    [RequireComponent(typeof(Rigidbody2D))]
+    public class EnemyMover : MonoBehaviour
     {
-        _rb                = GetComponent<Rigidbody2D>();
-        _rb.gravityScale   = 0f;
-        _rb.freezeRotation = true;
+        [SerializeField] private float speed = 2.25f;
+        [SerializeField] private float jitter = 0.15f;
 
-        FindPlayer();
-    }
+        private Rigidbody2D _rigidbody;
+        private Transform _playerTransform;
 
-    void Update()
-    {
-        if (GlobalVars.GameIsOver) return;
-
-        _timer += Time.deltaTime;
-        if (ply == null || _timer > 0.7f)
+        private void Awake()
         {
-            _timer = 0f;
-            FindPlayer();
-        }
-    }
-
-    void FixedUpdate()
-    {
-        if (GlobalVars.GameIsOver) return;
-
-        if (ply == null)
-        {
-            _rb.linearVelocity = new Vector2(Mathf.Sin(Time.time) * 0.5f, Mathf.Cos(Time.time) * 0.5f);
-            return;
+            _rigidbody = GetComponent<Rigidbody2D>();
+            _rigidbody.gravityScale = 0f;
+            _rigidbody.freezeRotation = true;
         }
 
-        Vector2 dir = ((Vector2)ply.position - _rb.position);
-        if (dir.sqrMagnitude < 0.0001f) return;
+        private void OnEnable()
+        {
+            EventBus.Instance.OnPlayerSpawned += HandlePlayerSpawned;
+        }
 
-        dir.Normalize();
+        private void OnDisable()
+        {
+            if (EventBus.Instance != null)
+            {
+                EventBus.Instance.OnPlayerSpawned -= HandlePlayerSpawned;
+            }
+        }
 
-        dir += Random.insideUnitCircle * jitter;
-        dir.Normalize();
+        private void HandlePlayerSpawned(Transform playerTransform)
+        {
+            _playerTransform = playerTransform;
+        }
 
-        _rb.linearVelocity = dir * speed;
-    }
+        public void SetPlayerTransform(Transform playerTransform)
+        {
+            _playerTransform = playerTransform;
+        }
 
-    void FindPlayer()
-    {
-        var p = GameObject.FindGameObjectWithTag(GlobalVars.PlayerTag);
-        ply = p != null ? p.transform : null;
+        private void FixedUpdate()
+        {
+            if (_playerTransform == null)
+            {
+                _rigidbody.linearVelocity = new Vector2(Mathf.Sin(Time.time) * 0.5f, Mathf.Cos(Time.time) * 0.5f);
+                return;
+            }
+
+            Vector2 dir = ((Vector2)_playerTransform.position - _rigidbody.position);
+            if (dir.sqrMagnitude < 0.0001f) return;
+
+            dir.Normalize();
+            dir += Random.insideUnitCircle * jitter;
+            dir.Normalize();
+
+            _rigidbody.linearVelocity = dir * speed;
+        }
     }
 }

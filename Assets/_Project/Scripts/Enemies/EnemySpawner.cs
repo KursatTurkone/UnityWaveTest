@@ -1,79 +1,99 @@
+using _Project.Scripts.Core;
 using UnityEngine;
 
-public class EnemySpawner : MonoBehaviour
+namespace _Project.Scripts.Enemies
 {
-    [Header("Prefab")]
-    public GameObject enemyPrefab;
-
-    [Header("Spawn Points (optional, will auto-generate if empty)")]
-    public Transform[] sps;
-
-    [Header("Legacy Settings")]
-    public bool randomizeIfNoPoints = true;
-    public float spawnRadiusIfNoPoints = 7f;
-
-    int _idx = 0;
-
-    void Awake()
+    public class EnemySpawner : MonoBehaviour
     {
-        if (enemyPrefab == null)
+        [Header("Prefab")]
+        [SerializeField] private GameObject enemyPrefab;
+
+        [Header("Spawn Points")]
+        [SerializeField] private Transform[] spawnPoints;
+
+        [Header("Fallback Settings")]
+        [SerializeField] private bool randomizeIfNoPoints = true;
+        [SerializeField] private float spawnRadiusIfNoPoints = 7f;
+
+        private int _currentIndex;
+        private Transform _playerTransform;
+
+        private void Awake()
         {
-            var anyEnemy = GameObject.FindGameObjectWithTag(GlobalVars.EnemyTag);
-            if (anyEnemy != null) enemyPrefab = anyEnemy;
+            if (spawnPoints == null || spawnPoints.Length == 0)
+            {
+                GenerateDefaultSpawnPoints();
+            }
         }
 
-        if (sps == null || sps.Length == 0)
+        private void OnEnable()
         {
-            sps = new Transform[4];
-            for (int i = 0; i < sps.Length; i++)
+            EventBus.Instance.OnPlayerSpawned += HandlePlayerSpawned;
+        }
+
+        private void OnDisable()
+        {
+            if (EventBus.Instance != null)
             {
-                var go = new GameObject("SpawnPoint_" + i);
-                go.transform.position = i switch
+                EventBus.Instance.OnPlayerSpawned -= HandlePlayerSpawned;
+            }
+        }
+
+        private void HandlePlayerSpawned(Transform playerTransform)
+        {
+            _playerTransform = playerTransform;
+        }
+
+        public void SpawnOneEnemy()
+        {
+            if (enemyPrefab == null) return;
+            if (_playerTransform == null) return;
+
+            Vector3 spawnPosition = GetSpawnPosition();
+            var enemyObject = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
+
+            if (enemyObject.TryGetComponent<EnemyMover>(out var enemyMover))
+            {
+                enemyMover.SetPlayerTransform(_playerTransform);
+            }
+        }
+
+        private Vector3 GetSpawnPosition()
+        {
+            if (spawnPoints != null && spawnPoints.Length > 0)
+            {
+                _currentIndex++;
+                if (_currentIndex >= spawnPoints.Length)
+                    _currentIndex = 0;
+
+                if (spawnPoints[_currentIndex] != null)
+                    return spawnPoints[_currentIndex].position;
+            }
+
+            if (randomizeIfNoPoints)
+            {
+                var randomDirection = Random.insideUnitCircle.normalized * spawnRadiusIfNoPoints;
+                return new Vector3(randomDirection.x, randomDirection.y, 0f);
+            }
+
+            return Vector3.zero;
+        }
+
+        private void GenerateDefaultSpawnPoints()
+        {
+            spawnPoints = new Transform[4];
+            for (int i = 0; i < spawnPoints.Length; i++)
+            {
+                var spawnPointObject = new GameObject($"SpawnPoint_{i}");
+                spawnPointObject.transform.position = i switch
                 {
                     0 => new Vector3(8, 0, 0),
                     1 => new Vector3(-8, 0, 0),
                     2 => new Vector3(0, 8, 0),
                     _ => new Vector3(0, -8, 0),
                 };
-                sps[i] = go.transform;
+                spawnPoints[i] = spawnPointObject.transform;
             }
         }
-    }
-
-    // Called via SendMessage from GameStuff
-    public void SpawnOneEnemy()
-    {
-        if (enemyPrefab == null) return;
-
-        Vector3 pos = getspawnposition_legacy();
-        var go = Instantiate(enemyPrefab, pos, Quaternion.identity);
-
-        go.tag = GlobalVars.EnemyTag;
-
-        var enemy = go.GetComponent<Enemy>();
-        if (enemy != null)
-        {
-            enemy.game = FindObjectOfType<GameStuff>();
-        }
-    }
-
-    Vector3 getspawnposition_legacy()
-    {
-        if (sps != null && sps.Length > 0)
-        {
-            _idx++;
-            if (_idx >= sps.Length) _idx = 0;
-
-            if (sps[_idx] != null)
-                return sps[_idx].position;
-        }
-
-        if (randomizeIfNoPoints)
-        {
-            var r = Random.insideUnitCircle.normalized * spawnRadiusIfNoPoints;
-            return new Vector3(r.x, r.y, 0f);
-        }
-
-        return Vector3.zero;
     }
 }
