@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using _Project.Scripts.Enemies;
+using UnityEngine;
 
 namespace _Project.Scripts.Core
 {
@@ -20,6 +21,7 @@ namespace _Project.Scripts.Core
         public bool IsGameOver => _isGameOver;
         public bool IsPaused => _isPaused;
         public int PointsPerKill => pointsPerKill;
+        public Transform CurrentPlayerTransform => currentPlayer != null ? currentPlayer.transform : null;
 
         private void OnEnable()
         {
@@ -60,8 +62,11 @@ namespace _Project.Scripts.Core
 
         private void EnsurePlayerExists()
         {
-            if (currentPlayer != null) return;
-
+            if (currentPlayer != null)
+            {
+                EventBus.Instance.Publish_PlayerSpawned(currentPlayer.transform);
+                return;
+            }
             if (playerPrefab == null) return;
 
             Vector3 spawnPos = playerSpawnPoint != null ? playerSpawnPoint.position : Vector3.zero;
