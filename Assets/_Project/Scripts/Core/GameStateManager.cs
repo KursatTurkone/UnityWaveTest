@@ -84,6 +84,7 @@ namespace _Project.Scripts.Core
             if (_isGameOver) return;
 
             _isGameOver = true;
+            GlobalVars.GameIsOver = true;
             SimpleEventBus.Publish(new OnGameOverEvent { FinalScore = _score, WaveReached = _currentWave });
         }
 
@@ -93,6 +94,7 @@ namespace _Project.Scripts.Core
             DestroyAllBullets();
             InitializeGame();
             ResetPlayer();
+            GlobalVars.GameIsOver = false;
         }
 
         private void ResetPlayer()
@@ -132,26 +134,13 @@ namespace _Project.Scripts.Core
 
         private void DestroyAllEnemies()
         {
-            var enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
-            foreach (var enemy in enemies)
-            {
-                if (enemy.gameObject.activeSelf)
-                {
-                    enemy.ForceDespawn();
-                }
-            }
+            ObjectPoolManager.DespawnAll<Enemy>();
         }
 
         private void DestroyAllBullets()
         {
-            var bullets = FindObjectsByType<Bullet>(FindObjectsSortMode.None);
-            foreach (var bullet in bullets)
-            {
-                if (bullet.gameObject.activeSelf)
-                {
-                    bullet.Despawn();
-                }
-            }
+            ObjectPoolManager.DespawnAll<Bullet>();
         }
     }
 }
+

@@ -59,7 +59,6 @@ namespace _Project.Scripts.Core
 
             for (int i = 0; i < enemyCount; i++)
             {
-                Debug.Log("Spawning enemy " + (i + 1) + " of wave " + _currentWave);
                 spawner.SpawnOneEnemy();
                 _aliveEnemies++;
                 yield return new WaitForSeconds(spawnInterval);

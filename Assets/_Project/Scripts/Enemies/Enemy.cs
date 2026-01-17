@@ -59,10 +59,5 @@ namespace _Project.Scripts.Enemies
             SimpleEventBus.Publish(new OnEnemyDiedEvent { ScoreGained = pointsPerKill });
             ObjectPoolManager.Despawn(gameObject);
         }
-
-        public void ForceDespawn()
-        {
-            ObjectPoolManager.Despawn(gameObject);
-        }
     }
 }

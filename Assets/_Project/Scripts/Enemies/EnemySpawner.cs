@@ -43,7 +43,6 @@ namespace _Project.Scripts.Enemies
 
         public void SpawnOneEnemy()
         {
-            Debug.Log("SpawnEnemy called");
             if (enemyPrefab == null) return;
 
             Vector3 spawnPosition = GetSpawnPosition();

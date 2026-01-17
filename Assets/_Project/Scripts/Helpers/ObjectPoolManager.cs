@@ -85,4 +85,18 @@ public static class ObjectPoolManager
         obj.transform.SetParent(Root);
         pools[source].Push(obj);
     }
+
+    // Despawn all active pooled objects of a specific type
+    public static void DespawnAll<T>() where T : Component
+    {
+        var activeInstances = new List<GameObject>(instanceToSource.Keys);
+        
+        foreach (var instance in activeInstances)
+        {
+            if (instance != null && instance.activeInHierarchy && instance.TryGetComponent<T>(out _))
+            {
+                Despawn(instance);
+            }
+        }
+    }
 }

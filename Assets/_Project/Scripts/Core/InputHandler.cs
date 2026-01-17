@@ -16,7 +16,6 @@ namespace _Project.Scripts.Core
         {
             HandlePauseInput();
             HandleRestartInput();
-            HandleDebugInput();
         }
 
         private void HandlePauseInput()
@@ -35,15 +34,7 @@ namespace _Project.Scripts.Core
                 SimpleEventBus.Publish(new OnGameRestartEvent());
             }
         }
-
-        private void HandleDebugInput()
-        {
-            if (Input.GetKeyDown(KeyCode.F1))
-            {
-                GlobalVars.VerboseLogs = !GlobalVars.VerboseLogs;
-                Debug.Log($"VerboseLogs = {GlobalVars.VerboseLogs}");
-            }
-        }
+        
     }
 }
 
