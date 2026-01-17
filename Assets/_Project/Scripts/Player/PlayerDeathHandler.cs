@@ -1,22 +1,19 @@
+using _Project.Scripts.Core;
 using UnityEngine;
 
 namespace _Project.Scripts.Player
 {
     /// <summary>
-    /// This component listens for the player's death event and notifies the game state controller.
+    /// This component listens for the player's death event and notifies the game state via EventBus.
     /// </summary>
     public sealed class PlayerDeathHandler : MonoBehaviour
     {
         [SerializeField] private PlayerHealth health;
 
-        private GameStuff _gameStuff;
-
         private void Awake()
         {
             if (health == null)
                 health = GetComponent<PlayerHealth>();
-
-            _gameStuff = FindFirstObjectByType<GameStuff>();
 
             if (health != null)
                 health.Died += OnDied;
@@ -30,11 +27,7 @@ namespace _Project.Scripts.Player
 
         private void OnDied()
         {
-            // One single bridge to legacy. Candidates can later route this into their game-state controller.
-            if (_gameStuff != null)
-                _gameStuff.NotifyPlayerDied();
-            else
-                GlobalVars.GameIsOver = true;
+            EventBus.Instance.Publish_PlayerDied();
         }
     }
 }
