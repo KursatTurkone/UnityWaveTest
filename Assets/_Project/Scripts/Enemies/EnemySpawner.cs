@@ -5,14 +5,14 @@ namespace _Project.Scripts.Enemies
 {
     public class EnemySpawner : MonoBehaviour
     {
-        [Header("Prefab")]
-        [SerializeField] private GameObject enemyPrefab;
+        [Header("Prefab")] [SerializeField] private GameObject enemyPrefab;
 
-        [Header("Spawn Points")]
-        [SerializeField] private Transform[] spawnPoints;
+        [Header("Spawn Points")] [SerializeField]
+        private Transform[] spawnPoints;
 
-        [Header("Fallback Settings")]
-        [SerializeField] private bool randomizeIfNoPoints = true;
+        [Header("Fallback Settings")] [SerializeField]
+        private bool randomizeIfNoPoints = true;
+
         [SerializeField] private float spawnRadiusIfNoPoints = 7f;
 
         private int _currentIndex;
@@ -49,7 +49,11 @@ namespace _Project.Scripts.Enemies
             if (enemyPrefab == null) return;
 
             Vector3 spawnPosition = GetSpawnPosition();
-            var enemyObject = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
+            var enemyObject = ObjectPoolManager.Spawn(enemyPrefab, spawnPosition, Quaternion.identity);
+
+            if (enemyObject == null)
+                return;
+
 
             if (_playerTransform != null && enemyObject.TryGetComponent<EnemyMover>(out var enemyMover))
             {

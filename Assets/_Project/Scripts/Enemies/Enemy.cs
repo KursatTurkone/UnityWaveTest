@@ -1,3 +1,4 @@
+using System;
 using _Project.Scripts.Core;
 using _Project.Scripts.Player;
 using UnityEngine;
@@ -12,6 +13,19 @@ namespace _Project.Scripts.Enemies
         [SerializeField] private int pointsPerKill = 10;
 
         private float _lastContactDamageTime = -999f;
+        private int _initialHp;
+
+        private void Awake()
+        {
+            _initialHp = hp;
+        }
+
+        private void OnEnable()
+        {
+            // Reset HP or other stats if necessary
+            _lastContactDamageTime = -999f;
+            hp = _initialHp;
+        }
 
         public void TakeDamage(int dmg)
         {
@@ -44,7 +58,7 @@ namespace _Project.Scripts.Enemies
         private void Die()
         {
             EventBus.Instance.Publish_EnemyDied(pointsPerKill);
-            Destroy(gameObject);
+            ObjectPoolManager.Despawn(gameObject);
         }
     }
 }

@@ -4,6 +4,6 @@ public class Bullet : MonoBehaviour
 {
    public void NotifyHit()
    {
-       Destroy(gameObject);
+       ObjectPoolManager.Despawn(gameObject);
    }
 }

@@ -9,8 +9,8 @@ namespace _Project.Scripts.Player
     public sealed class PlayerShooting : MonoBehaviour
     {
         [SerializeField] private PlayerConfig config;
-        [SerializeField] private Transform    firePoint;
-        [SerializeField] private GameObject   bulletPrefab;
+        [SerializeField] private Transform firePoint;
+        [SerializeField] private GameObject bulletPrefab;
 
         private float _cooldownRemaining;
 
@@ -33,11 +33,15 @@ namespace _Project.Scripts.Player
 
             var aimDirection = aimDirectionRaw.sqrMagnitude > 0.0001f ? aimDirectionRaw.normalized : Vector2.right;
 
-            var bulletGo = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
+            var bulletGo = ObjectPoolManager.Spawn(bulletPrefab, firePoint.position, Quaternion.identity);
+
+            if (bulletGo == null)
+                return;
+
 
             if (bulletGo.TryGetComponent(out Rigidbody2D rb))
             {
-                rb.gravityScale   = 0f;
+                rb.gravityScale = 0f;
                 rb.freezeRotation = true;
                 rb.linearVelocity = aimDirection * config.bulletSpeed;
             }
@@ -48,11 +52,11 @@ namespace _Project.Scripts.Player
             _cooldownRemaining = config.fireCooldownSeconds;
         }
 
-        private static IEnumerator DestroyBulletAfterTime(Object bullet, float time)
+        private static IEnumerator DestroyBulletAfterTime(GameObject bullet, float time)
         {
             yield return new WaitForSeconds(time);
 
-            if (bullet != null) Destroy(bullet);
+            if (bullet != null) ObjectPoolManager.Despawn(bullet);
         }
     }
 }
