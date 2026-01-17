@@ -1,4 +1,4 @@
-﻿using _Project.Scripts.Core;
+﻿using Case.UnityWaveTest.EventBus;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,20 +13,18 @@ namespace _Project.Scripts.UI
 
         private void OnEnable()
         {
-            EventBus.Instance.OnScoreChanged += HandleScoreChanged;
-            EventBus.Instance.OnWaveStarted += HandleWaveStarted;
-            EventBus.Instance.OnGameOver += HandleGameOver;
-            EventBus.Instance.OnGameRestart += HandleGameRestart;
+            SimpleEventBus.Subscribe<OnScoreChangedEvent>(HandleScoreChanged);
+            SimpleEventBus.Subscribe<OnWaveStartedEvent>(HandleWaveStarted);
+            SimpleEventBus.Subscribe<OnGameOverEvent>(HandleGameOver);
+            SimpleEventBus.Subscribe<OnGameRestartEvent>(HandleGameRestart);
         }
 
         private void OnDisable()
         {
-            if (EventBus.Instance == null) return;
-
-            EventBus.Instance.OnScoreChanged -= HandleScoreChanged;
-            EventBus.Instance.OnWaveStarted -= HandleWaveStarted;
-            EventBus.Instance.OnGameOver -= HandleGameOver;
-            EventBus.Instance.OnGameRestart -= HandleGameRestart;
+            SimpleEventBus.Unsubscribe<OnScoreChangedEvent>(HandleScoreChanged);
+            SimpleEventBus.Unsubscribe<OnWaveStartedEvent>(HandleWaveStarted);
+            SimpleEventBus.Unsubscribe<OnGameOverEvent>(HandleGameOver);
+            SimpleEventBus.Unsubscribe<OnGameRestartEvent>(HandleGameRestart);
         }
 
         private void Start()
@@ -35,25 +33,25 @@ namespace _Project.Scripts.UI
                 gameOverPanel.SetActive(false);
         }
 
-        private void HandleScoreChanged(int newScore)
+        private void HandleScoreChanged(OnScoreChangedEvent evt)
         {
             if (scoreText != null)
-                scoreText.text = $"Score: {newScore}";
+                scoreText.text = $"Score: {evt.NewScore}";
         }
 
-        private void HandleWaveStarted(int waveNumber)
+        private void HandleWaveStarted(OnWaveStartedEvent evt)
         {
             if (waveText != null)
-                waveText.text = $"Wave: {waveNumber}";
+                waveText.text = $"Wave: {evt.WaveNumber}";
         }
 
-        private void HandleGameOver(int finalScore, int finalWave)
+        private void HandleGameOver(OnGameOverEvent evt)
         {
             if (gameOverPanel != null)
                 gameOverPanel.SetActive(true);
         }
 
-        private void HandleGameRestart()
+        private void HandleGameRestart(OnGameRestartEvent evt)
         {
             if (gameOverPanel != null)
                 gameOverPanel.SetActive(false);

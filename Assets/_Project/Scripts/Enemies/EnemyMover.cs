@@ -1,4 +1,4 @@
-using _Project.Scripts.Core;
+using Case.UnityWaveTest.EventBus;
 using UnityEngine;
 
 namespace _Project.Scripts.Enemies
@@ -21,20 +21,17 @@ namespace _Project.Scripts.Enemies
 
         private void OnEnable()
         {
-            EventBus.Instance.OnPlayerSpawned += HandlePlayerSpawned;
+            SimpleEventBus.Subscribe<OnPlayerSpawnedEvent>(HandlePlayerSpawned);
         }
 
         private void OnDisable()
         {
-            if (EventBus.Instance != null)
-            {
-                EventBus.Instance.OnPlayerSpawned -= HandlePlayerSpawned;
-            }
+            SimpleEventBus.Unsubscribe<OnPlayerSpawnedEvent>(HandlePlayerSpawned);
         }
 
-        private void HandlePlayerSpawned(Transform playerTransform)
+        private void HandlePlayerSpawned(OnPlayerSpawnedEvent evt)
         {
-            _playerTransform = playerTransform;
+            _playerTransform = evt.PlayerTransform;
         }
 
         public void SetPlayerTransform(Transform playerTransform)

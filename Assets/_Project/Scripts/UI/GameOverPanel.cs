@@ -1,4 +1,4 @@
-using _Project.Scripts.Core;
+using Case.UnityWaveTest.EventBus;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,7 +26,7 @@ namespace _Project.Scripts.UI
         {
             if (hintText != null)
             {
-                hintText.text = $"Press 'R' to restart";
+                hintText.text = "Press 'R' to restart";
             }
         }
 
@@ -44,7 +44,7 @@ namespace _Project.Scripts.UI
 
         private void OnRestartClicked()
         {
-            EventBus.Instance.Publish_GameRestart();
+            SimpleEventBus.Publish(new OnGameRestartEvent());
             Hide();
         }
     }

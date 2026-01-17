@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 namespace _Project.Scripts.Player
@@ -38,7 +37,6 @@ namespace _Project.Scripts.Player
             if (bulletGo == null)
                 return;
 
-
             if (bulletGo.TryGetComponent(out Rigidbody2D rb))
             {
                 rb.gravityScale = 0f;
@@ -46,17 +44,8 @@ namespace _Project.Scripts.Player
                 rb.linearVelocity = aimDirection * config.bulletSpeed;
             }
 
-            bulletGo.tag = GlobalVars.BulletTag;
-            StartCoroutine(DestroyBulletAfterTime(bulletGo, config.bulletDuration));
-
             _cooldownRemaining = config.fireCooldownSeconds;
-        }
-
-        private static IEnumerator DestroyBulletAfterTime(GameObject bullet, float time)
-        {
-            yield return new WaitForSeconds(time);
-
-            if (bullet != null) ObjectPoolManager.Despawn(bullet);
         }
     }
 }
+

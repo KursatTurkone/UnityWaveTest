@@ -1,5 +1,5 @@
 using System;
-using _Project.Scripts.Core;
+using Case.UnityWaveTest.EventBus;
 using _Project.Scripts.Player;
 using UnityEngine;
 
@@ -22,7 +22,6 @@ namespace _Project.Scripts.Enemies
 
         private void OnEnable()
         {
-            // Reset HP or other stats if necessary
             _lastContactDamageTime = -999f;
             hp = _initialHp;
         }
@@ -41,7 +40,7 @@ namespace _Project.Scripts.Enemies
         {
             if (other.TryGetComponent<Bullet>(out var bullet))
             {
-                TakeDamage(1); 
+                TakeDamage(1);
                 bullet.NotifyHit();
                 return;
             }
@@ -57,7 +56,12 @@ namespace _Project.Scripts.Enemies
 
         private void Die()
         {
-            EventBus.Instance.Publish_EnemyDied(pointsPerKill);
+            SimpleEventBus.Publish(new OnEnemyDiedEvent { ScoreGained = pointsPerKill });
+            ObjectPoolManager.Despawn(gameObject);
+        }
+
+        public void ForceDespawn()
+        {
             ObjectPoolManager.Despawn(gameObject);
         }
     }

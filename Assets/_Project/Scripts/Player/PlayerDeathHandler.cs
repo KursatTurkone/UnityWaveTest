@@ -1,4 +1,4 @@
-using _Project.Scripts.Core;
+using Case.UnityWaveTest.EventBus;
 using UnityEngine;
 
 namespace _Project.Scripts.Player
@@ -27,7 +27,8 @@ namespace _Project.Scripts.Player
 
         private void OnDied()
         {
-            EventBus.Instance.Publish_PlayerDied();
+            SimpleEventBus.Publish(new OnPlayerDiedEvent());
         }
     }
 }
+

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using _Project.Scripts.Enemies;
+using Case.UnityWaveTest.EventBus;
 using UnityEngine;
 
 namespace _Project.Scripts.Core
@@ -22,16 +23,14 @@ namespace _Project.Scripts.Core
 
         private void OnEnable()
         {
-            EventBus.Instance.OnEnemyDied += HandleEnemyDied;
-            EventBus.Instance.OnGameRestart += HandleGameRestart;
+            SimpleEventBus.Subscribe<OnEnemyDiedEvent>(HandleEnemyDied);
+            SimpleEventBus.Subscribe<OnGameRestartEvent>(HandleGameRestart);
         }
 
         private void OnDisable()
         {
-            if (EventBus.Instance == null) return;
-
-            EventBus.Instance.OnEnemyDied -= HandleEnemyDied;
-            EventBus.Instance.OnGameRestart -= HandleGameRestart;
+            SimpleEventBus.Unsubscribe<OnEnemyDiedEvent>(HandleEnemyDied);
+            SimpleEventBus.Unsubscribe<OnGameRestartEvent>(HandleGameRestart);
         }
 
         private void Start()
@@ -45,7 +44,7 @@ namespace _Project.Scripts.Core
             _aliveEnemies = 0;
             _isSpawning = true;
 
-            EventBus.Instance.Publish_WaveStarted(_currentWave);
+            SimpleEventBus.Publish(new OnWaveStartedEvent { WaveNumber = _currentWave });
 
             if (_spawnCoroutine != null)
                 StopCoroutine(_spawnCoroutine);
@@ -55,10 +54,12 @@ namespace _Project.Scripts.Core
 
         private IEnumerator SpawnWaveEnemies()
         {
+            yield return new WaitForEndOfFrame();
             int enemyCount = GetEnemyCountForWave(_currentWave);
 
             for (int i = 0; i < enemyCount; i++)
             {
+                Debug.Log("Spawning enemy " + (i + 1) + " of wave " + _currentWave);
                 spawner.SpawnOneEnemy();
                 _aliveEnemies++;
                 yield return new WaitForSeconds(spawnInterval);
@@ -72,13 +73,19 @@ namespace _Project.Scripts.Core
             return baseEnemiesPerWave + (waveNumber - 1) * enemiesAddedPerWave;
         }
 
-        private void HandleEnemyDied(int points)
+        private void HandleEnemyDied(OnEnemyDiedEvent evt)
         {
             _aliveEnemies--;
 
+            if (_aliveEnemies < 0)
+            {
+                _aliveEnemies = 0;
+                return;
+            }
+
             if (_aliveEnemies <= 0 && !_isSpawning)
             {
-                EventBus.Instance.Publish_WaveCompleted(_currentWave);
+                SimpleEventBus.Publish(new OnWaveCompletedEvent { WaveNumber = _currentWave });
                 StartCoroutine(StartNextWaveAfterDelay());
             }
         }
@@ -89,7 +96,7 @@ namespace _Project.Scripts.Core
             StartWave(_currentWave + 1);
         }
 
-        private void HandleGameRestart()
+        private void HandleGameRestart(OnGameRestartEvent evt)
         {
             if (_spawnCoroutine != null)
                 StopCoroutine(_spawnCoroutine);

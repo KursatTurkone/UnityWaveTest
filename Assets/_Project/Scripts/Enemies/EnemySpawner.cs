@@ -1,18 +1,18 @@
-using _Project.Scripts.Core;
+using Case.UnityWaveTest.EventBus;
 using UnityEngine;
 
 namespace _Project.Scripts.Enemies
 {
     public class EnemySpawner : MonoBehaviour
     {
-        [Header("Prefab")] [SerializeField] private GameObject enemyPrefab;
+        [Header("Prefab")]
+        [SerializeField] private GameObject enemyPrefab;
 
-        [Header("Spawn Points")] [SerializeField]
-        private Transform[] spawnPoints;
+        [Header("Spawn Points")]
+        [SerializeField] private Transform[] spawnPoints;
 
-        [Header("Fallback Settings")] [SerializeField]
-        private bool randomizeIfNoPoints = true;
-
+        [Header("Fallback Settings")]
+        [SerializeField] private bool randomizeIfNoPoints = true;
         [SerializeField] private float spawnRadiusIfNoPoints = 7f;
 
         private int _currentIndex;
@@ -28,24 +28,22 @@ namespace _Project.Scripts.Enemies
 
         private void OnEnable()
         {
-            EventBus.Instance.OnPlayerSpawned += HandlePlayerSpawned;
+            SimpleEventBus.Subscribe<OnPlayerSpawnedEvent>(HandlePlayerSpawned);
         }
 
         private void OnDisable()
         {
-            if (EventBus.Instance != null)
-            {
-                EventBus.Instance.OnPlayerSpawned -= HandlePlayerSpawned;
-            }
+            SimpleEventBus.Unsubscribe<OnPlayerSpawnedEvent>(HandlePlayerSpawned);
         }
 
-        private void HandlePlayerSpawned(Transform playerTransform)
+        private void HandlePlayerSpawned(OnPlayerSpawnedEvent evt)
         {
-            _playerTransform = playerTransform;
+            _playerTransform = evt.PlayerTransform;
         }
 
         public void SpawnOneEnemy()
         {
+            Debug.Log("SpawnEnemy called");
             if (enemyPrefab == null) return;
 
             Vector3 spawnPosition = GetSpawnPosition();

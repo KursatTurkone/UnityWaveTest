@@ -1,3 +1,4 @@
+using Case.UnityWaveTest.EventBus;
 using UnityEngine;
 
 namespace _Project.Scripts.Core
@@ -23,7 +24,7 @@ namespace _Project.Scripts.Core
             if (allowPause && Input.GetKeyDown(pauseKey))
             {
                 _isPaused = !_isPaused;
-                EventBus.Instance.Publish_GamePaused(_isPaused);
+                SimpleEventBus.Publish(new OnGamePausedEvent { IsPaused = _isPaused });
             }
         }
 
@@ -31,7 +32,7 @@ namespace _Project.Scripts.Core
         {
             if (Input.GetKeyDown(restartKey))
             {
-                EventBus.Instance.Publish_GameRestart();
+                SimpleEventBus.Publish(new OnGameRestartEvent());
             }
         }
 
@@ -45,3 +46,4 @@ namespace _Project.Scripts.Core
         }
     }
 }
+

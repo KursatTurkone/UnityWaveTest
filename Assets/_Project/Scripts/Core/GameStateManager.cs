@@ -1,17 +1,18 @@
 ﻿using _Project.Scripts.Enemies;
+using _Project.Scripts.Player;
+using Case.UnityWaveTest.EventBus;
 using UnityEngine;
 
 namespace _Project.Scripts.Core
 {
     public class GameStateManager : MonoBehaviour
     {
-        [Header("Score Settings")]
-        [SerializeField] private int pointsPerKill = 10;
+        [Header("Score Settings")] [SerializeField]
+        private int pointsPerKill = 10;
 
-        [Header("Player")]
-        [SerializeField] private GameObject playerPrefab;
+        [Header("Player")] [SerializeField] private GameObject playerPrefab;
         [SerializeField] private Transform playerSpawnPoint;
-        [SerializeField] private GameObject currentPlayer;
+        private GameObject currentPlayer;
 
         private int _score;
         private int _currentWave = 1;
@@ -25,22 +26,20 @@ namespace _Project.Scripts.Core
 
         private void OnEnable()
         {
-            EventBus.Instance.OnEnemyDied += HandleEnemyDied;
-            EventBus.Instance.OnPlayerDied += HandlePlayerDied;
-            EventBus.Instance.OnGameRestart += HandleGameRestart;
-            EventBus.Instance.OnGamePaused += HandleGamePaused;
-            EventBus.Instance.OnWaveStarted += HandleWaveStarted;
+            SimpleEventBus.Subscribe<OnEnemyDiedEvent>(HandleEnemyDied);
+            SimpleEventBus.Subscribe<OnPlayerDiedEvent>(HandlePlayerDied);
+            SimpleEventBus.Subscribe<OnGameRestartEvent>(HandleGameRestart);
+            SimpleEventBus.Subscribe<OnGamePausedEvent>(HandleGamePaused);
+            SimpleEventBus.Subscribe<OnWaveStartedEvent>(HandleWaveStarted);
         }
 
         private void OnDisable()
         {
-            if (EventBus.Instance == null) return;
-
-            EventBus.Instance.OnEnemyDied -= HandleEnemyDied;
-            EventBus.Instance.OnPlayerDied -= HandlePlayerDied;
-            EventBus.Instance.OnGameRestart -= HandleGameRestart;
-            EventBus.Instance.OnGamePaused -= HandleGamePaused;
-            EventBus.Instance.OnWaveStarted -= HandleWaveStarted;
+            SimpleEventBus.Unsubscribe<OnEnemyDiedEvent>(HandleEnemyDied);
+            SimpleEventBus.Unsubscribe<OnPlayerDiedEvent>(HandlePlayerDied);
+            SimpleEventBus.Unsubscribe<OnGameRestartEvent>(HandleGameRestart);
+            SimpleEventBus.Unsubscribe<OnGamePausedEvent>(HandleGamePaused);
+            SimpleEventBus.Unsubscribe<OnWaveStartedEvent>(HandleWaveStarted);
         }
 
         private void Start()
@@ -57,55 +56,78 @@ namespace _Project.Scripts.Core
             Time.timeScale = 1f;
 
             EnsurePlayerExists();
-            EventBus.Instance.Publish_ScoreChanged(_score);
+            SimpleEventBus.Publish(new OnScoreChangedEvent { NewScore = _score });
         }
 
         private void EnsurePlayerExists()
         {
-            if (currentPlayer != null)
-            {
-                EventBus.Instance.Publish_PlayerSpawned(currentPlayer.transform);
-                return;
-            }
             if (playerPrefab == null) return;
 
             Vector3 spawnPos = playerSpawnPoint != null ? playerSpawnPoint.position : Vector3.zero;
-            currentPlayer = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-            EventBus.Instance.Publish_PlayerSpawned(currentPlayer.transform);
+            if (currentPlayer == null)
+            {
+                currentPlayer = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
+                SimpleEventBus.Publish(new OnPlayerSpawnedEvent { PlayerTransform = currentPlayer.transform });
+            }
         }
 
-        private void HandleEnemyDied(int pointsGained)
+        private void HandleEnemyDied(OnEnemyDiedEvent evt)
         {
             if (_isGameOver) return;
 
-            _score += pointsGained;
-            EventBus.Instance.Publish_ScoreChanged(_score);
+            _score += evt.ScoreGained;
+            SimpleEventBus.Publish(new OnScoreChangedEvent { NewScore = _score });
         }
 
-        private void HandlePlayerDied()
+        private void HandlePlayerDied(OnPlayerDiedEvent evt)
         {
             if (_isGameOver) return;
 
             _isGameOver = true;
-            currentPlayer = null;
-            EventBus.Instance.Publish_GameOver(_score, _currentWave);
+            SimpleEventBus.Publish(new OnGameOverEvent { FinalScore = _score, WaveReached = _currentWave });
         }
 
-        private void HandleGameRestart()
+        private void HandleGameRestart(OnGameRestartEvent evt)
         {
             DestroyAllEnemies();
+            DestroyAllBullets();
             InitializeGame();
+            ResetPlayer();
         }
 
-        private void HandleGamePaused(bool paused)
+        private void ResetPlayer()
         {
-            _isPaused = paused;
-            Time.timeScale = paused ? 0f : 1f;
+            if (currentPlayer == null) return;
+
+            if (playerSpawnPoint != null)
+            {
+                currentPlayer.transform.position = playerSpawnPoint.position;
+                currentPlayer.transform.rotation = Quaternion.identity;
+            }
+
+            if (currentPlayer.TryGetComponent<PlayerHealth>(out var playerHealth))
+            {
+                playerHealth.ResetToFull();
+            }
+
+            if (currentPlayer.TryGetComponent<Rigidbody2D>(out var rb))
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+            }
+
+            currentPlayer.SetActive(true);
         }
 
-        private void HandleWaveStarted(int waveNumber)
+        private void HandleGamePaused(OnGamePausedEvent evt)
         {
-            _currentWave = waveNumber;
+            _isPaused = evt.IsPaused;
+            Time.timeScale = evt.IsPaused ? 0f : 1f;
+        }
+
+        private void HandleWaveStarted(OnWaveStartedEvent evt)
+        {
+            _currentWave = evt.WaveNumber;
         }
 
         private void DestroyAllEnemies()
@@ -113,9 +135,23 @@ namespace _Project.Scripts.Core
             var enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
             foreach (var enemy in enemies)
             {
-                Destroy(enemy.gameObject);
+                if (enemy.gameObject.activeSelf)
+                {
+                    enemy.ForceDespawn();
+                }
+            }
+        }
+
+        private void DestroyAllBullets()
+        {
+            var bullets = FindObjectsByType<Bullet>(FindObjectsSortMode.None);
+            foreach (var bullet in bullets)
+            {
+                if (bullet.gameObject.activeSelf)
+                {
+                    bullet.Despawn();
+                }
             }
         }
     }
 }
-
